@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <cstdint>
+#include <fstream>
+#include <cstdlib>
 
 using namespace std;
 
@@ -12,7 +14,7 @@ void make_seg_tree(const vector<int>& a)
     while (sz < a.size())
         sz <<= 1;
     seg_tree.resize(2 * sz, 1000 * 1000 * 1000 + 1);
-    for (size_t i = sz; i < 2 * sz; ++i)
+    for (size_t i = sz; i < min(2 * sz, sz + a.size()); ++i)
         seg_tree[i] = a[i - sz];
     for (size_t i = sz - 1; i > 0; --i)
         seg_tree[i] = min(seg_tree[2 * i], seg_tree[2 * i + 1]);
@@ -21,9 +23,6 @@ void make_seg_tree(const vector<int>& a)
 int get_min_val(size_t l, size_t r, size_t lbound,
                 size_t rbound, size_t idx)
 {
-//    cout << "Getting min val for " << l << " " << r << endl;
-//    cout << "On " << lbound << " " << rbound << endl;
-//    cout << "With idx = " << idx << endl;
     if (lbound == rbound)
         return seg_tree[idx];
     if (l == lbound && r == rbound)
@@ -55,6 +54,13 @@ int main()
     for (int i = 0; i < n; ++i)
         cin >> a[i];
 
+    if (c == 1)
+    {
+        cout << 0;
+        return 0;
+    }
+
+
     vector<uint64_t> costs(n, 0);
     costs[0] = a[0];
     uint64_t last_c_cost = a[0];
@@ -65,21 +71,16 @@ int main()
         if (i >= c)
             last_c_cost -= a[i - c];
         costs[i] = costs[i - 1] + a[i];
-  //      cout << "Last cost = " << last_c_cost << endl;
         if (i >= c - 1)
         {
             size_t sz = seg_tree.size() / 2;
             int min_val = get_min_val(i - c + 1, i, 0, sz - 1, 1);
             uint64_t sub_cost = (i >= c ? costs[i - c] : 0);
-  //          cout << "Min val = " << min_val << endl;
             uint64_t upd_cost = sub_cost + static_cast<uint64_t>(
                                     last_c_cost - min_val);
-  //          cout << "Upd. cost = " << upd_cost << endl;
             if (upd_cost < costs[i])
                 costs[i] = upd_cost;
         }
-//        cout << "i = " << i << "; " << "cost = "
-//             << costs[i] << endl;
     }
 
     cout << costs[n - 1];
