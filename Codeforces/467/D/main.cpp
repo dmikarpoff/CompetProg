@@ -1,22 +1,48 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <queue>
 
 using namespace std;
 
 std::vector<int> a[100001];
 std::vector<int> rev[100001];
-enum Label
+
+struct Prec
 {
-    Win = 0, Lose, None
+    int dist = -1;
+    int parent = -1;
 };
-std::vector<Label> res;
+
+std::vector<Prec> even_dist;
+std::vector<Prec> odd_dist;
+
+struct Elem
+{
+    int vert;
+    bool even;
+};
+
+vector<int> status;
+
+bool dfs(int x)
+{
+    if (status[x] == 0)
+        return true;
+    if (status[x] == 1)
+        return false;
+    status[x] = 0;
+    for (int v : a[x])
+        if (dfs(v))
+            return true;
+    status[x] = 1;
+    return false;
+}
 
 int main()
 {
     int n, m;
     cin >> n >> m;
-    res.resize(n + 1, None);
     for (int i = 1; i <= n; ++i)
     {
         int c;
@@ -30,76 +56,70 @@ int main()
         }
     }
 
-    set<int> to_check;
-    for (size_t i = 1; i <= n; ++i)
+    int origin;
+    cin >> origin;
+
+    even_dist.resize(n + 1);
+    odd_dist.resize(n + 1);
+    queue<Elem> q;
+    for (int i = 1; i <= n; ++i)
         if (a[i].empty())
         {
-//            cout << "Mark " << i << " lose" << endl;
-            res[i] = Lose;
-            for (size_t j = 0; j < rev[i].size(); ++j)
-                to_check.insert(rev[i][j]);
+            q.push(Elem{i, true});
+            even_dist[i].dist = 0;
         }
-    while (!to_check.empty())
+    while (!q.empty())
     {
-//        cout << "Next check" << endl;
-        set<int> next_check;
-        for (int v : to_check)
+        Elem e = q.front();
+        q.pop();
+        for (int v : rev[e.vert])
         {
-//            cout << "Checking " << v << endl;
-            if (res[v] != None)
-                continue;
-            int cnt[3] = {0};
-            for (size_t i = 0; i < a[v].size(); ++i)
-                cnt[res[a[v][i]]] += 1;
-            if (cnt[Lose] > 0)
+            if (e.even)
             {
-                res[v] = Win;
-//                cout << "Mark " << v << " win" << endl;
-            }
-            else if (cnt[Win] == a[v].size())
-            {
-                res[v] = Lose;
-//                cout << "Mark " << v << " lose" << endl;
-            }
-
-            if (res[v] != None)
-            {
-                for (size_t j = 0; j < rev[v].size(); ++j)
-                    next_check.insert(rev[v][j]);
-            }
-        }
-        swap(next_check, to_check);
-    }
-    int v;
-    cin >> v;
-    switch (res[v])
-    {
-    case None:
-        cout << "Draw";
-        return 0;
-    case Lose:
-        cout << "Lose";
-        return 0;
-    case Win:
-    {
-        cout << "Win\n";
-        while (!a[v].empty())
-        {
-            cout << v << " ";
-            if (res[v] == Win)
-            {
-                 for (size_t j = 0; j < a[v].size(); ++j)
-                    if (res[a[v][j]] == Lose)
-                        v = a[v][j];
+                if (odd_dist[v].dist == -1)
+                {
+                    odd_dist[v].dist = even_dist[e.vert].dist + 1;
+                    odd_dist[v].parent = e.vert;
+                    q.push(Elem{v, false});
+                }
             }
             else
             {
-                v = a[v].front();
+                if (even_dist[v].dist == -1)
+                {
+                    even_dist[v].dist = odd_dist[e.vert].dist + 1;
+                    even_dist[v].parent = e.vert;
+                    q.push(Elem{v, true});
+                }
             }
         }
-        cout << v;
+    }
+
+    if (even_dist[origin].dist == -1 && odd_dist[origin].dist == -1)
+    {
+        cout << "Draw";
         return 0;
     }
+    if (odd_dist[origin].dist != -1)
+    {
+        cout << "Win\n";
+        while (true)
+        {
+            cout << origin << " ";
+            int p = odd_dist[origin].parent;
+            cout << p << " ";
+            if (even_dist[p].parent == -1)
+                break;
+            origin = even_dist[p].parent;
+        }
+        return 0;
     }
+    status.resize(n + 1, -1);
+    if (dfs(origin))
+    {
+        cout << "Draw";
+        return 0;
+    }
+    cout << "Lose";
     return 0;
 }
