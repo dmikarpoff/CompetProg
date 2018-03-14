@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <set>
 
 using namespace std;
 
@@ -10,41 +11,33 @@ int main()
     cin >> n;
     vector<uint64_t> v(n);
     vector<uint64_t> t(n);
-    vector<uint64_t> sum(n, 0);
     for (int i = 0; i < n; ++i)
-        cin >> v[i];
+        scanf("%I64d", &v[i]);
     for (int i = 0; i < n; ++i)
-        cin >> t[i];
+        scanf("%I64d", &t[i]);
     uint64_t prev_bound = 0;
-    vector<uint64_t> data;
-    data.reserve(n);
+    multiset<uint64_t> data;
     for (size_t i = 0; i < n; ++i)
     {
-//        cout << "----------" << endl;
-//        cout << "it " << i << endl;
         uint64_t cur_bound = t[i] + prev_bound;
         uint64_t val = prev_bound + v[i];
-        auto it = std::lower_bound(data.begin(), data.end(), val);
-        data.insert(it, val);
-/*
-        for (auto v : data)
-            cout << v << " ";
-        cout << endl;
-*/
+        data.insert(val);
+
         if (t[i] == 0)
         {
             cout << 0 << " ";
             continue;
         }
-        auto left = upper_bound(data.begin(), data.end(), prev_bound);
-        auto right = lower_bound(data.begin(), data.end(), cur_bound);
+        auto left = data.lower_bound(prev_bound);
+        auto right = data.lower_bound(cur_bound);
         uint64_t total = 0;
         for (auto j = left; j != right; ++j)
             total += (*j - prev_bound);
-        auto cnt = distance(right, data.end());
-        total += cnt * t[i];
+        //auto cnt = distance(right, data.end());
+        data.erase(data.begin(), right);
+        total += data.size() * t[i];
 
-        cout << total << " ";
+        printf("%I64d ", total);
 
         prev_bound = cur_bound;
     }
