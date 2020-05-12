@@ -1,129 +1,128 @@
-#include <iostream>
+#include <cstdio>
 #include <vector>
 #include <queue>
 #include <algorithm>
+#include <set>
+#include <iostream>
+#include <sstream>
 
 using namespace std;
 
-vector<int> mapping;
+int n;
+int mapping[2001];
+int index[2001];
+int link[2001];
+int mark[2001];
+int st[2001];
+int stack_top = 0;
+int component_num = 0;
+int cur_index = 0;
 
-int dfs(int v, const vector<vector<int>>& adj, vector<int>& p,
-        vector<int>& mark)
+void dfs(int v, const vector<vector<int>>& adj)
 {
+//    cout << "Start search from " << v << endl;
     mark[v] = 1;
+    index[v] = cur_index++;
+    link[v] = index[v];
+    st[stack_top++] = v;
+//    cout << "Index of node = " << index[v] << endl;
     for (auto u : adj[v])
     {
-        u = mapping[u];
-        if (u == v)
-            continue;
         if (mark[u] == 0)
         {
-            p[u] = v;
-            auto res = dfs(u, adj, p, mark);
-            if (res != -1)
-            {
-                return res;
-            }
+            dfs(u, adj);
+            link[v] = min(link[v], link[u]);
         }
         else
         {
-            if (mark[u] == 2)
-                continue;
             if (mark[u] == 1)
             {
-                p[u] = v;
-                return u;
+                link[v] = min(link[v], index[u]);
             }
         }
     }
-    mark[v] = 2;
-    return -1;
+//    cout << "Leaving vertex " << v << endl;
+//    cout << "======= Estimated link = " << link[v] << endl;
+    if (link[v] == index[v])
+    {
+//        cout << "Collecting component from vertex " << v << endl;
+        mapping[v] = component_num;
+        mark[v] = 2;
+        while (stack_top != 0 && st[stack_top - 1] != v )
+        {
+            auto u = st[--stack_top];
+            mapping[u] = component_num;
+            mark[u] = 2;
+        }
+        --stack_top;
+        ++component_num;
+    }
 }
+
+char buffer[10000];
 
 int main()
 {
-    int n;
-    cin >> n;
+    scanf("%d", &n);
+    gets(buffer);
     vector<vector<int>> adj(n);
     for (int i = 0; i < n; ++i)
     {
-        mapping.push_back(i);
+        gets(buffer);
+        stringstream ss(buffer);
         int val = 0;
-        cin >> val;
+        //sscanf(buffer, "%d", &val);
+        ss >> val;
         while (val != 0)
         {
             if (val != i + 1)
             {
                 adj[i].push_back(val - 1);
             }
-            cin >> val;
-        }
-//        sort(adj[i].begin(), adj[i].end());
-    }
-    vector<int> cycle;
-    do {
-        cycle.clear();
-        vector<int> p(n, -1);
-        vector<int> mark(n, 0);
-        for (int i = 0; i < n && cycle.empty(); ++i)
-        {
-            if (mapping[i] != i || mark[i] != 0)
-                continue;
-            int c = dfs(i, adj, p, mark);
-            if (c != -1)
-            {
-                cycle.push_back(c);
-                for (int j = p[c]; j != c; j = p[j])
-                    cycle.push_back(j);
-                break;
-            }
-        }
-        if (!cycle.empty())
-        {
-            int l = cycle.front();
-//            cout << l << " ";
-            for (size_t j = 1; j < cycle.size(); ++j)
-            {
-                int r = cycle[j];
-//                cout << r << " ";
-                for (int h = 0; h < n; ++h)
-                {
-                    if (mapping[h] == r)
-                        mapping[h] = l;
-                }
-                adj[l].insert(adj[l].end(), adj[r].begin(), adj[r].end());
-                adj[l].erase(remove_if(adj[l].begin(), adj[l].end(),
-                                       [l,r](auto x) {return x == l || x == r;}),
-                             adj[l].end()
-                           );
-                adj[r].clear();
-            }
-//            cout << endl;
-        }
-    } while (!cycle.empty());
-    vector<int> pw(n, 0);
-    for (const auto& a : adj)
-    {
-        for (auto v : a)
-        {
-            ++pw[v];
+            // scanf("%d", &val);
+            ss >> val;
         }
     }
+
     for (int i = 0; i < n; ++i)
     {
-        if (mapping[i] != i)
-            pw[i] = -1;
+        if (mark[i] != 0)
+            continue;
+        dfs(i, adj);
     }
+
+    /*
+    for (int i = 0; i < n; ++i)
+        cout << mapping[i] << " ";
+    cout << endl;
+    */
+
+    vector<int> pw(component_num, 0);
+    for (size_t i = 0; i < adj.size(); ++i)
+    {
+        for (auto v : adj[i])
+            if (mapping[i] != mapping[v])
+            {
+                ++pw[mapping[v]];
+            }
+    }
+
+    /*
+    for (auto x : pw)
+        cout << x << " ";
+    cout << endl;
+    */
+
     auto i = find(pw.begin(), pw.end(), 0);
     if (i == pw.end() || find(i + 1, pw.end(), 0) != pw.end())
     {
-        cout << 0 << endl;
+        printf("0\n");
         return 0;
     }
     auto r = i - pw.begin();
     for (int i = 0; i < n; ++i)
         if (mapping[i] == r)
-            cout << i + 1 << " ";
-    cout << 0 << endl;
+            printf("%d ", i + 1);
+    printf("0\n");
     return 0;
 }
