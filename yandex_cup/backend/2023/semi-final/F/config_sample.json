@@ -1,0 +1,11 @@
+{
+    "sensors": [
+        {
+            "endpoint": "localhost:15000/green",
+            "name": "Зелёная краска"
+        }
+    ],
+    "server": {
+        "endpoint": "127.0.0.1:15000"
+    }
+}
