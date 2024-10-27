@@ -5,7 +5,7 @@ import asyncio
 import aiohttp
 
 cfg_file = sys.argv[1]
-with open(cfg_file) as f:
+with open(cfg_file, 'r', encoding="utf8") as f:
     cfg_data = json.load(f)
 
 server_ep = cfg_data["server"]["endpoint"]
@@ -25,6 +25,7 @@ async def scan_sensor(sensor):
             try:
                 async with session.get(sensor_url, timeout=1) as r:
                     #print("Response " + str(r.status));
+                    print(r.headers)
                     if r.ok:
                         data = await r.text()
                         data = json.loads(data)
@@ -43,6 +44,7 @@ async def scan_sensor(sensor):
             try:
                 async with session.post(server_url, json={"meter_device_id": dmid, 'measurings': state}, timeout=1) as r:
                     #print("!!!Server");
+                    print(r.headers)
                     if r.ok:
                         #print("Done")
                         posted = True
