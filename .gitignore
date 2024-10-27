@@ -4,3 +4,4 @@
 *.depend
 **/.vs
 x64
+**/*.user
